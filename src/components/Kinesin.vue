@@ -3,6 +3,7 @@ const defaultGroup = 'default'
 const instances = {
   [defaultGroup]: {}
 }
+const noTransition = 'all 0s ease 0s'
 
 const getPosition = el => {
   const rect = el.getBoundingClientRect()
@@ -40,34 +41,40 @@ export default {
   },
   methods: {
     enter (el, done) {
-      this.$nextTick(() => { // wait for 'from' instance to update position in leave hook
+      this.style = {
+        transition: noTransition
+      }
+      this.nextRepaint(() => {
+        // wait for 'from' instance to update 'from' position in leave hook
+        // and noTransition style to come into effect
         this.from = this.getFrom()
         if (this.from) {
           this.classes = ['kinesin-active', 'kinesin-from']
           this.style = {
             transform: this.translateRelativeOffset(el),
-            transition: 'none'
+            transition: noTransition
           }
-          this.$nextTick(() => { // wait for next DOM update
-            window.requestAnimationFrame(() => { // wait for next repaint
-              this.style = {
-                transform: 'none'
-              }
-              this.classes = ['kinesin-active', 'kinesin-to']
-              this.$el.addEventListener('transitionend', () => {
+          this.nextRepaint(() => { // wait for next DOM update
+            this.style = {}
+            this.classes = ['kinesin-active', 'kinesin-to']
+            const onTransitionEnd = e => {
+              if (e.target === el) {
+                el.removeEventListener('transitionend', onTransitionEnd)
                 this.classes = []
-                this.style = {}
                 this.$emit('transitionend')
                 done()
-              }, { once: true })
-            })
+              }
+            }
+            el.addEventListener('transitionend', onTransitionEnd)
           })
         }
       })
     },
     leave (el, done) {
-      this.$nextTick(() => {
+      this.nextRepaint(() => {
         setTimeout(() => {
+          // push to bottom of call stack to ensure that the 'to' instance
+          // can grab this instance before it is deleted
           delete instances[this.group][this.id]
           if (Object.keys(instances[this.group]).length === 0) {
             delete instances[this.group]
@@ -91,6 +98,13 @@ export default {
       const fromPos = this.from
       const thisPos = getPosition(el)
       return `translate3d(${fromPos.left - thisPos.left}px, ${fromPos.top - thisPos.top}px, 0)`
+    },
+    nextRepaint (callback) {
+      this.$nextTick(() => { // wait for next DOM update
+        window.requestAnimationFrame(() => { // wait for next repaint
+          callback()
+        })
+      })
     }
   },
   render (h) {
