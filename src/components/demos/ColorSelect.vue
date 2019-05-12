@@ -4,6 +4,7 @@
       v-for="color in colorOptions"
       :key="color"
       :color="color"
+      :dotColor="dotColor"
       :isCurrentColor="color === currentColor"
       @click.native="currentColor = color"
     />
@@ -26,7 +27,15 @@ export default {
   data () {
     return {
       colorOptions,
-      currentColor: colorOptions[0]
+      currentColor: colorOptions[0],
+      dotColor: colorOptions[0]
+    }
+  },
+  watch: {
+    currentColor () {
+      this.$nextTick(() => {
+        this.dotColor = this.currentColor
+      })
     }
   }
 }

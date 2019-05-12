@@ -7,7 +7,7 @@
       >
         <div
           class="cso__dot"
-          :style="{ background: color.toLowerCase() }"
+          :style="{ background: dotColor }"
         />
       </kinesin>
     </div>
@@ -27,6 +27,10 @@ export default {
       type: String,
       required: true
     },
+    dotColor: {
+      type: String,
+      required: true
+    },
     isCurrentColor: {
       type: Boolean,
       default: false
@@ -40,6 +44,7 @@ $dotSize: 0.5em;
 
 .cso {
   cursor: pointer;
+  user-select: none;
 
   &__dot-outer {
     height: $dotSize * 2;
@@ -54,6 +59,7 @@ $dotSize: 0.5em;
     background: black;
     border-radius: 50%;
     margin: auto;
+    transition: background 0.6s;
   }
 }
 
