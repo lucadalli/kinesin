@@ -7,6 +7,7 @@
       :dotColor="dotColor"
       :isCurrentColor="color === currentColor"
       @click.native="currentColor = color"
+      @transitionstart="changeDotColor"
     />
   </div>
 </template>
@@ -31,11 +32,9 @@ export default {
       dotColor: colorOptions[0]
     }
   },
-  watch: {
-    currentColor () {
-      this.$nextTick(() => {
-        this.dotColor = this.currentColor
-      })
+  methods: {
+    changeDotColor () {
+      this.dotColor = this.currentColor
     }
   }
 }

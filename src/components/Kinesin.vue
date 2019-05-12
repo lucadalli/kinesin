@@ -49,6 +49,7 @@ export default {
         // and noTransition style to come into effect
         this.from = this.getFrom()
         if (this.from) {
+          this.$emit('transitionstart')
           this.classes = ['kinesin-active', 'kinesin-from']
           this.style = {
             transform: this.translateRelativeOffset(el),

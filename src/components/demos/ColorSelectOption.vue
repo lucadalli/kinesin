@@ -3,6 +3,7 @@
     <div class="cso__dot-outer">
       <kinesin
         :show="isCurrentColor"
+        @transitionstart="$emit('transitionstart', $event)"
         id="colorDot"
       >
         <div
