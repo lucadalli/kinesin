@@ -34,28 +34,32 @@ export default {
   },
   data () {
     return {
+      isIE: /MSIE|Trident/.test(window.navigator.userAgent),
       from: null,
       classes: [],
-      style: {}
+      style: {
+        transition: noTransition
+      }
     }
   },
   methods: {
     enter (el, done) {
-      this.style = {
-        transition: noTransition
+      if (this.isIE) {
+        return this.enterTransition(this.$nextTick, el, done)
       }
-      this.nextRepaint(() => {
-        // wait for 'from' instance to update 'from' position in leave hook
-        // and noTransition style to come into effect
+      return this.enterTransition(this.nextRepaint, el, done)
+    },
+    enterTransition (deferrer, el, done) {
+      deferrer(() => {
         this.from = this.getFrom()
         if (this.from) {
-          this.$emit('transitionstart')
-          this.classes = ['kinesin-active', 'kinesin-from']
           this.style = {
-            transform: this.translateRelativeOffset(el),
-            transition: noTransition
+            transition: noTransition,
+            transform: this.translateRelativeOffset(el)
           }
-          this.nextRepaint(() => { // wait for next DOM update
+          this.classes = ['kinesin-active', 'kinesin-from']
+          this.$emit('transitionstart')
+          this.nextRepaint(() => {
             this.style = {}
             this.classes = ['kinesin-active', 'kinesin-to']
             const onTransitionEnd = e => {
