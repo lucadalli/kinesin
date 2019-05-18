@@ -5,6 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build --target lib --name kinesin src/components/Kinesin.vue",
+    "build-demo": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "test:unit": "vue-cli-service test:unit"
   },
@@ -29,6 +30,15 @@
     "sass-loader": "^7.1.0",
     "vue-template-compiler": "^2.5.21"
   },
+  "main": "dist/kinesin.common.js",
+  "unpkg": "dist/kinesin.umd.min.js",
+  "browser": {
+    "./sfc": "src/components/Kinesin.vue"
+  },
+  "files": [
+    "dist/*",
+    "src/components/Kinesin.vue"
+  ],
   "gitHooks": {
     "pre-commit": "lint-staged"
   },
@@ -37,5 +47,6 @@
       "vue-cli-service lint",
       "git add"
     ]
-  }
+  },
+  "license": "MIT"
 }
