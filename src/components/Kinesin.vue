@@ -4,6 +4,7 @@ const instances = {
   [defaultGroup]: {}
 }
 const noTransition = 'all 0s ease 0s'
+const isIE = /MSIE|Trident/.test(window.navigator.userAgent)
 
 const getPosition = el => {
   const rect = el.getBoundingClientRect()
@@ -30,11 +31,14 @@ export default {
     tag: {
       type: String,
       default: 'div'
+    },
+    animateTag: {
+      type: String,
+      default: 'div'
     }
   },
   data () {
     return {
-      isIE: /MSIE|Trident/.test(window.navigator.userAgent),
       from: null,
       classes: [],
       style: {
@@ -42,9 +46,14 @@ export default {
       }
     }
   },
+  computed: {
+    className () {
+      return 'kinesin-' + this.id
+    }
+  },
   methods: {
     enter (el, done) {
-      if (this.isIE) {
+      if (isIE) {
         return this.enterTransition(this.$nextTick, el, done)
       }
       return this.enterTransition(this.nextRepaint, el, done)
@@ -57,11 +66,11 @@ export default {
             transition: noTransition,
             transform: this.translateRelativeOffset(el)
           }
-          this.classes = ['kinesin-active', 'kinesin-from']
+          this.classes = [this.className, 'kinesin-active', 'kinesin-from']
           this.$emit('transitionstart')
           this.nextRepaint(() => {
             this.style = {}
-            this.classes = ['kinesin-active', 'kinesin-to']
+            this.classes = [this.className, 'kinesin-active', 'kinesin-to']
             const onTransitionEnd = e => {
               if (e.target === el) {
                 el.removeEventListener('transitionend', onTransitionEnd)
@@ -126,7 +135,22 @@ export default {
         }
       },
       this.show ? [
-        h(this.tag, { style: this.style, class: this.classes }, this.$slots.default)
+        h(
+          this.tag,
+          {
+            style: this.style,
+            class: this.classes
+          },
+          [
+            h(
+              this.animateTag,
+              {
+                staticClass: 'kinesin-animate'
+              },
+              this.$slots.default
+            )
+          ]
+        )
       ] : null
     )
   }
