@@ -1,10 +1,9 @@
 <script>
+const noTransition = 'all 0s ease 0s'
 const defaultGroup = 'default'
 const instances = {
   [defaultGroup]: {}
 }
-const noTransition = 'all 0s ease 0s'
-const isIE = /MSIE|Trident/.test(window.navigator.userAgent)
 
 const getPosition = el => {
   const rect = el.getBoundingClientRect()
@@ -39,11 +38,7 @@ export default {
   },
   data () {
     return {
-      from: null,
-      classes: [],
-      style: {
-        transition: noTransition
-      }
+      from: null
     }
   },
   computed: {
@@ -53,28 +48,21 @@ export default {
   },
   methods: {
     enter (el, done) {
-      if (isIE) {
-        return this.enterTransition(this.$nextTick, el, done)
-      }
-      return this.enterTransition(this.nextRepaint, el, done)
-    },
-    enterTransition (deferrer, el, done) {
-      deferrer(() => {
+      window.requestAnimationFrame(() => {
         this.from = this.getFrom()
         if (this.from) {
-          this.style = {
-            transition: noTransition,
-            transform: this.translateRelativeOffset(el)
-          }
-          this.classes = [this.className, 'kinesin-active', 'kinesin-from']
+          el.style.transition = noTransition
+          el.style.transform = this.translateRelativeOffset(el)
+          el.className = `${this.className} kinesin-active kinesin-from`
           this.$emit('transitionstart')
-          this.nextRepaint(() => {
-            this.style = {}
-            this.classes = [this.className, 'kinesin-active', 'kinesin-to']
+          window.requestAnimationFrame(() => {
+            el.style.transition = null
+            el.style.transform = null
+            el.className = `${this.className} kinesin-active kinesin-to`
             const onTransitionEnd = e => {
               if (e.target === el) {
                 el.removeEventListener('transitionend', onTransitionEnd)
-                this.classes = []
+                el.className = ''
                 this.$emit('transitionend')
                 done()
               }
@@ -85,7 +73,7 @@ export default {
       })
     },
     leave (el, done) {
-      this.nextRepaint(() => {
+      window.requestAnimationFrame(() => {
         setTimeout(() => {
           // push to bottom of call stack to ensure that the 'to' instance
           // can grab this instance before it is deleted
@@ -112,13 +100,6 @@ export default {
       const fromPos = this.from
       const thisPos = getPosition(el)
       return `translate3d(${fromPos.left - thisPos.left}px, ${fromPos.top - thisPos.top}px, 0)`
-    },
-    nextRepaint (callback) {
-      this.$nextTick(() => { // wait for next DOM update
-        window.requestAnimationFrame(() => { // wait for next repaint
-          callback()
-        })
-      })
     }
   },
   render (h) {
@@ -137,10 +118,7 @@ export default {
       this.show ? [
         h(
           this.tag,
-          {
-            style: this.style,
-            class: this.classes
-          },
+          {},
           [
             h(
               this.animateTag,
