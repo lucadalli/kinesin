@@ -1,15 +1,13 @@
 <script>
-const noTransition = 'all 0s ease 0s'
-const defaultGroup = 'default'
-const instances = {
-  [defaultGroup]: {}
-}
+import Vue from 'vue'
+
+const bus = new Vue()
 
 const getPosition = el => {
   const rect = el.getBoundingClientRect()
   return {
-    top: rect.top + window.pageYOffset,
-    left: rect.left + window.pageXOffset
+    top: rect.top,
+    left: rect.left
   }
 }
 
@@ -21,7 +19,7 @@ export default {
     },
     group: {
       type: [String, Number],
-      default: defaultGroup
+      default: 'default'
     },
     show: {
       type: Boolean,
@@ -38,63 +36,62 @@ export default {
   },
   data () {
     return {
-      from: null
+      from: null,
+      receivedFrom: this.show
     }
   },
   computed: {
     className () {
       return 'kinesin-' + this.id
+    },
+    isReadyToRender () {
+      return this.show && this.receivedFrom
+    },
+    eventName () {
+      return `_${this.group}_${this.id}`
     }
   },
+  created () {
+    bus.$on(this.eventName, this.onPositionReceived)
+  },
+  destroyed () {
+    bus.$off(this.eventName, this.onPositionReceived)
+  },
   methods: {
+    onPositionReceived (pos) {
+      this.from = pos
+      this.receivedFrom = this.show
+    },
     enter (el, done) {
-      window.requestAnimationFrame(() => {
-        this.from = this.getFrom()
-        if (this.from) {
-          el.style.transition = noTransition
-          el.style.transform = this.translateRelativeOffset(el)
-          el.className = `${this.className} kinesin-active kinesin-from`
-          this.$emit('transitionstart')
-          window.requestAnimationFrame(() => {
-            el.style.transition = null
-            el.style.transform = null
-            el.className = `${this.className} kinesin-active kinesin-to`
-            const onTransitionEnd = e => {
-              if (e.target === el) {
-                el.removeEventListener('transitionend', onTransitionEnd)
-                el.className = ''
-                this.$emit('transitionend')
-                done()
-              }
-            }
-            el.addEventListener('transitionend', onTransitionEnd)
-          })
+      if (this.from) {
+        el.style.transition = 'all 0s ease 0s' // no transition
+        el.style.transform = this.translateRelativeOffset(el)
+        el.className = `${this.className} kinesin-active kinesin-from`
+        this.$emit('transitionstart')
+        // force document reflow
+        this.$_reflow = document.body.offsetHeight
+        el.style.removeProperty('transition')
+        el.style.removeProperty('transform')
+        el.className = `${this.className} kinesin-active kinesin-to`
+        const onTransitionEnd = e => {
+          if (e.target === el) {
+            el.removeEventListener('transitionend', onTransitionEnd)
+            el.className = ''
+            this.$emit('transitionend')
+            done()
+          }
         }
-      })
+        el.addEventListener('transitionend', onTransitionEnd)
+      }
     },
     leave (el, done) {
-      window.requestAnimationFrame(() => {
-        setTimeout(() => {
-          // push to bottom of call stack to ensure that the 'to' instance
-          // can grab this instance before it is deleted
-          delete instances[this.group][this.id]
-          if (Object.keys(instances[this.group]).length === 0) {
-            delete instances[this.group]
-          }
-        }, 0)
+      this.$nextTick(() => {
+        this.updatePosition(el)
+        done()
       })
-      this.updatePosition(el)
-      done()
-    },
-    getFrom () {
-      return instances[this.group] && instances[this.group][this.id]
     },
     updatePosition (el) {
-      const pos = getPosition(el)
-      if (!instances[this.group]) {
-        instances[this.group] = {}
-      }
-      return (instances[this.group][this.id] = pos)
+      bus.$emit(this.eventName, getPosition(el))
     },
     translateRelativeOffset (el) {
       const fromPos = this.from
@@ -115,7 +112,7 @@ export default {
           leave: this.leave
         }
       },
-      this.show ? [
+      this.isReadyToRender ? [
         h(
           this.tag,
           {},
