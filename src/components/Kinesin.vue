@@ -157,9 +157,12 @@ export default {
 }
 </script>
 
-<style>
-  .kinesin-active {
-    /* default transition property, intended to be overridden */
-    transition: transform 0.6s;
-  }
+<style scoped>
+.kinesin-active {
+  /* default transition property, intended to be overridden */
+  transition: transform 0.6s;
+}
+.kinesin-animate {
+  height: 100%;
+}
 </style>
