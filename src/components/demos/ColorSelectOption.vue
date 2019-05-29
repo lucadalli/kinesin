@@ -4,7 +4,7 @@
       <Kinesin
         :show="isCurrentColor"
         @transitionstart="$emit('transitionstart', $event)"
-        id="color-dot"
+        name="color-dot"
       >
         <div
           class="cso__dot"
