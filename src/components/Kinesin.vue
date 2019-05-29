@@ -13,7 +13,7 @@ const getPosition = el => {
 
 export default {
   props: {
-    id: {
+    name: {
       type: [String, Number],
       required: true
     },
@@ -42,13 +42,13 @@ export default {
   },
   computed: {
     className () {
-      return 'kinesin-' + this.id
+      return 'kinesin-' + this.name
     },
     isReadyToRender () {
       return this.show && this.receivedFrom
     },
     eventName () {
-      return `_${this.group}_${this.id}`
+      return `_${this.group}_${this.name}`
     }
   },
   created () {
