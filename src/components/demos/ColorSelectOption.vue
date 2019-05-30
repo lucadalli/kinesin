@@ -99,7 +99,7 @@ $dotSize: 0.5em;
   }
 }
 
-.kinesin-color-dot .kinesin-animate {
+.kinesin-color-dot.kinesin-active .kinesin-animate {
   animation: bounce 0.6s;
 }
 </style>
