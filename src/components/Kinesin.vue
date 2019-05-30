@@ -1,7 +1,7 @@
 <script>
 import Vue from 'vue'
 
-const bus = new Vue()
+const bus = new Vue() // event bus
 
 const getPosition = el => {
   const rect = el.getBoundingClientRect()
@@ -37,12 +37,23 @@ export default {
   data () {
     return {
       from: null,
-      receivedFrom: this.show
+      receivedFrom: this.show,
+      state: 'idle',
+      style: {}
     }
   },
   computed: {
-    className () {
-      return 'kinesin-' + this.name
+    baseClass () {
+      return `kinesin-${this.name} kinesin`
+    },
+    class () {
+      if (this.state === 'from') {
+        return [this.baseClass, 'kinesin-active kinesin-from']
+      }
+      if (this.state === 'to') {
+        return [this.baseClass, 'kinesin-active kinesin-to']
+      }
+      return this.baseClass
     },
     isReadyToRender () {
       return this.show && this.receivedFrom
@@ -64,24 +75,26 @@ export default {
     },
     enter (el, done) {
       if (this.from) {
-        el.style.transition = 'all 0s ease 0s' // no transition
-        el.style.transform = this.translateRelativeOffset(el)
-        el.className = `${this.className} kinesin-active kinesin-from`
-        this.$emit('transitionstart')
-        // force document reflow
-        this.$_reflow = document.body.offsetHeight
-        el.style.removeProperty('transition')
-        el.style.removeProperty('transform')
-        el.className = `${this.className} kinesin-active kinesin-to`
-        const onTransitionEnd = e => {
-          if (e.target === el) {
-            el.removeEventListener('transitionend', onTransitionEnd)
-            el.className = ''
-            this.$emit('transitionend')
-            done()
-          }
+        this.state = 'from'
+        this.style = {
+          transition: 'all 0s ease 0s', // no transition
+          transform: this.translateRelativeOffset(el)
         }
-        el.addEventListener('transitionend', onTransitionEnd)
+        this.$emit('transitionstart')
+        this.$nextTick(() => { // wait for DOM update
+          this.$_reflow = document.body.offsetHeight // force document reflow
+          this.state = 'to'
+          this.style = {}
+          const onTransitionEnd = e => {
+            if (e.target === el) {
+              el.removeEventListener('transitionend', onTransitionEnd)
+              this.state = 'idle'
+              this.$emit('transitionend')
+              done()
+            }
+          }
+          el.addEventListener('transitionend', onTransitionEnd)
+        })
       }
     },
     leave (el, done) {
@@ -115,7 +128,10 @@ export default {
       this.isReadyToRender ? [
         h(
           this.tag,
-          {},
+          {
+            class: this.class,
+            style: this.style
+          },
           [
             h(
               this.animateTag,
