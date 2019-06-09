@@ -2,18 +2,21 @@
   <div id="app">
     <ColorSelectDemo />
     <CarouselDots />
+    <BoxGrid />
   </div>
 </template>
 
 <script>
 import ColorSelectDemo from '@/components/demos/ColorSelect.vue'
 import CarouselDots from '@/components/demos/CarouselDots.vue'
+import BoxGrid from '@/components/demos/BoxGrid.vue'
 
 export default {
   name: 'app',
   components: {
     ColorSelectDemo,
-    CarouselDots
+    CarouselDots,
+    BoxGrid
   }
 }
 </script>
