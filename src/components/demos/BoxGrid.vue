@@ -66,14 +66,19 @@ export default {
     width: 100%;
   }
 
-  .kinesin-box-grid {
-    transition: transform 1s;
-  }
-
   &__box-bg {
     height: 100%;
     width: 100%;
     background: red;
+    transition: all 0.4s;
+
+    .kinesin-active & {
+      border-radius: 50%;
+    }
+  }
+
+  .kinesin-box-grid {
+    transition: transform 1s;
   }
 }
 </style>

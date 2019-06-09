@@ -63,9 +63,7 @@ $dotSize: 0.5em;
     transition: background 0.6s;
   }
 }
-</style>
 
-<style lang="scss">
 @keyframes bounce {
   from,
   20%,
@@ -99,7 +97,7 @@ $dotSize: 0.5em;
   }
 }
 
-.kinesin-color-dot.kinesin-active .kinesin-animate {
+.kinesin-active .cso__dot {
   animation: bounce 0.6s;
 }
 </style>
