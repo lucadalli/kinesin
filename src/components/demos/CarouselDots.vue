@@ -33,7 +33,7 @@ export default {
 
 <style lang="scss" scoped>
 .carousel-dots {
-  font-size: 1.2rem;
+  font-size: 1rem;
   margin: 1em;
 
   .dot {

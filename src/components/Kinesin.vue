@@ -28,16 +28,14 @@ export default {
     tag: {
       type: String,
       default: 'div'
-    },
-    animateTag: {
-      type: String,
-      default: 'div'
     }
   },
   data () {
     return {
       from: null,
-      receivedFrom: this.show,
+      isIntendedPosRecipient: this.show,
+      // isIntendedPosRecipient initialiased as show such that if show is true,
+      // isReadyToRender is also true, rendering the element on mounted
       state: 'idle',
       style: {}
     }
@@ -56,7 +54,7 @@ export default {
       return this.baseClass
     },
     isReadyToRender () {
-      return this.show && this.receivedFrom
+      return this.show && this.isIntendedPosRecipient
     },
     eventName () {
       return `_${this.group}_${this.name}`
@@ -69,9 +67,12 @@ export default {
     bus.$off(this.eventName, this.onPositionReceived)
   },
   methods: {
-    onPositionReceived (pos) {
-      this.from = pos
-      this.receivedFrom = this.show
+    onPositionReceived (pos, state) {
+      this.isIntendedPosRecipient = this.show
+      if (this.isIntendedPosRecipient) {
+        this.from = pos
+        this.state = state
+      }
     },
     enter (el, done) {
       if (this.from) {
@@ -99,12 +100,12 @@ export default {
     },
     leave (el, done) {
       this.$nextTick(() => {
-        this.updatePosition(el)
+        this.updatePosition(el, this.state)
         done()
       })
     },
-    updatePosition (el) {
-      bus.$emit(this.eventName, getPosition(el))
+    updatePosition (el, state) {
+      bus.$emit(this.eventName, getPosition(el), state)
     },
     translateRelativeOffset (el) {
       const fromPos = this.from
@@ -132,15 +133,7 @@ export default {
             class: this.class,
             style: this.style
           },
-          [
-            h(
-              this.animateTag,
-              {
-                staticClass: 'kinesin-animate'
-              },
-              this.$slots.default
-            )
-          ]
+          this.$slots.default
         )
       ] : null
     )
@@ -149,11 +142,8 @@ export default {
 </script>
 
 <style scoped>
-.kinesin-active {
+.kinesin {
   /* default transition property, intended to be overridden */
   transition: transform 0.6s;
-}
-.kinesin-animate {
-  height: 100%;
 }
 </style>
