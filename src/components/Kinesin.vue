@@ -37,8 +37,10 @@ export default {
   data () {
     return {
       from: null,
-      receivedFrom: this.show,
-      state: 'idle',
+      isIntendedPosRecipient: this.show,
+      // isIntendedPosRecipient initialiased as show such that if show is true,
+      // isReadyToRender is also true, rendering the element on mounted
+      state: 'from',
       style: {}
     }
   },
@@ -56,7 +58,7 @@ export default {
       return this.baseClass
     },
     isReadyToRender () {
-      return this.show && this.receivedFrom
+      return this.show && this.isIntendedPosRecipient
     },
     eventName () {
       return `_${this.group}_${this.name}`
@@ -70,12 +72,13 @@ export default {
   },
   methods: {
     onPositionReceived (pos) {
-      this.from = pos
-      this.receivedFrom = this.show
+      this.isIntendedPosRecipient = this.show
+      if (this.isIntendedPosRecipient) {
+        this.from = pos
+      }
     },
     enter (el, done) {
       if (this.from) {
-        this.state = 'from'
         this.style = {
           transition: 'all 0s ease 0s', // no transition
           transform: this.translateRelativeOffset(el)
@@ -95,6 +98,8 @@ export default {
           }
           el.addEventListener('transitionend', onTransitionEnd)
         })
+      } else {
+        this.state = 'idle'
       }
     },
     leave (el, done) {
