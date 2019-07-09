@@ -8,7 +8,7 @@
     "build-demo": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "test:unit": "vue-cli-service test:unit",
-    "publish": "npm run build && npm publish"
+    "release": "npm run build && npm publish"
   },
   "dependencies": {},
   "devDependencies": {
