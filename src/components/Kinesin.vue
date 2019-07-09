@@ -3,14 +3,6 @@ import Vue from 'vue'
 
 const bus = new Vue() // event bus
 
-const getPosition = el => {
-  const rect = el.getBoundingClientRect()
-  return {
-    top: rect.top,
-    left: rect.left
-  }
-}
-
 export default {
   props: {
     name: {
@@ -28,14 +20,18 @@ export default {
     tag: {
       type: String,
       default: 'div'
+    },
+    ignoreCssTransforms: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
     return {
       from: null,
       isIntendedPosRecipient: this.show,
-      // isIntendedPosRecipient initialiased as show such that if show is true,
-      // isReadyToRender is also true, rendering the element on mounted
+      // 'isIntendedPosRecipient' initialiased as 'show' such that if 'show' is true on mounted,
+      // computed property 'isReadyToRender' is also true, hence rendering the element
       state: 'idle',
       style: {}
     }
@@ -67,6 +63,39 @@ export default {
     bus.$off(this.eventName, this.onPositionReceived)
   },
   methods: {
+    getPosition (el) {
+      if (this.ignoreCssTransforms) {
+        let top = 0
+        let left = 0
+        let element = el
+
+        // Traverse the DOM tree upwards to find the
+        // cumulative offsets without considering CSS transforms
+        do {
+          top += element.offsetTop || 0
+          left += element.offsetLeft || 0
+          element = element.offsetParent
+        } while (element)
+
+        return {
+          top,
+          left
+        }
+      }
+      const rect = el.getBoundingClientRect()
+      return {
+        top: rect.top,
+        left: rect.left
+      }
+    },
+    updatePosition (el, state) {
+      bus.$emit(this.eventName, this.getPosition(el), state)
+    },
+    translateRelativeOffset (el) {
+      const fromPos = this.from
+      const thisPos = this.getPosition(el)
+      return `translate3d(${fromPos.left - thisPos.left}px, ${fromPos.top - thisPos.top}px, 0)`
+    },
     onPositionReceived (pos, state) {
       this.isIntendedPosRecipient = this.show
       if (this.isIntendedPosRecipient) {
@@ -103,14 +132,6 @@ export default {
         this.updatePosition(el, this.state)
         done()
       })
-    },
-    updatePosition (el, state) {
-      bus.$emit(this.eventName, getPosition(el), state)
-    },
-    translateRelativeOffset (el) {
-      const fromPos = this.from
-      const thisPos = getPosition(el)
-      return `translate3d(${fromPos.left - thisPos.left}px, ${fromPos.top - thisPos.top}px, 0)`
     }
   },
   render (h) {
