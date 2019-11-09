@@ -24,6 +24,10 @@ export default {
     ignoreCssTransforms: {
       type: Boolean,
       default: false
+    },
+    transitionSize: {
+      type: Boolean,
+      default: true
     }
   },
   data () {
@@ -59,11 +63,11 @@ export default {
   created () {
     bus.$on(this.eventName, this.onPositionReceived)
   },
-  destroyed () {
+  beforeDestroy () {
     bus.$off(this.eventName, this.onPositionReceived)
   },
   methods: {
-    getPosition (el) {
+    getPositionAndSize (el) {
       if (this.ignoreCssTransforms) {
         let top = 0
         let left = 0
@@ -79,22 +83,33 @@ export default {
 
         return {
           top,
-          left
+          left,
+          width: el.offsetWidth,
+          height: el.offsetHeight
         }
       }
       const rect = el.getBoundingClientRect()
       return {
         top: rect.top,
-        left: rect.left
+        left: rect.left,
+        width: rect.width,
+        height: rect.height
       }
     },
     updatePosition (el, state) {
-      bus.$emit(this.eventName, this.getPosition(el), state)
+      bus.$emit(this.eventName, this.getPositionAndSize(el), state)
     },
-    translateRelativeOffset (el) {
-      const fromPos = this.from
-      const thisPos = this.getPosition(el)
-      return `translate3d(${fromPos.left - thisPos.left}px, ${fromPos.top - thisPos.top}px, 0)`
+    determineTransform (el) {
+      const fromState = this.from
+      const thisState = this.getPositionAndSize(el)
+      if (this.transitionSize) {
+        const xScaleOffset = (fromState.width - thisState.width) / 2
+        const yScaleOffset = (fromState.height - thisState.height) / 2
+        const translation = `translate3d(${fromState.left - thisState.left + xScaleOffset}px, ${fromState.top - thisState.top + yScaleOffset}px, 0)`
+        const scale = `scale(${fromState.width / thisState.width}, ${fromState.height / thisState.height})`
+        return `${translation} ${scale}`
+      }
+      return `translate3d(${fromState.left - thisState.left}px, ${fromState.top - thisState.top}px, 0)`
     },
     onPositionReceived (pos, state) {
       this.isIntendedPosRecipient = this.show
@@ -108,7 +123,7 @@ export default {
         this.state = 'from'
         this.style = {
           transition: 'all 0s ease 0s', // no transition
-          transform: this.translateRelativeOffset(el)
+          transform: this.determineTransform(el)
         }
         this.$emit('transitionstart')
         this.$nextTick(() => { // wait for DOM update

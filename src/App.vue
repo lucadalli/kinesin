@@ -3,6 +3,7 @@
     <ColorSelectDemo />
     <CarouselDots />
     <BoxGrid />
+    <FillBox />
   </div>
 </template>
 
@@ -10,13 +11,15 @@
 import ColorSelectDemo from '@/components/demos/ColorSelect.vue'
 import CarouselDots from '@/components/demos/CarouselDots.vue'
 import BoxGrid from '@/components/demos/BoxGrid.vue'
+import FillBox from '@/components/demos/FillBox.vue'
 
 export default {
   name: 'app',
   components: {
     ColorSelectDemo,
     CarouselDots,
-    BoxGrid
+    BoxGrid,
+    FillBox
   }
 }
 </script>
