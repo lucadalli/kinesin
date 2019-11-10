@@ -67,10 +67,10 @@ export default {
     }
   },
   created () {
-    bus.$on(this.eventName, this.onPositionReceived)
+    bus.$on(this.eventName, this.onFromReceived)
   },
   beforeDestroy () {
-    bus.$off(this.eventName, this.onPositionReceived)
+    bus.$off(this.eventName, this.onFromReceived)
   },
   methods: {
     getVisualProperties (el) {
@@ -117,7 +117,7 @@ export default {
       }
       return `translate3d(${fromState.left - thisState.left}px, ${fromState.top - thisState.top}px, 0)`
     },
-    onPositionReceived (pos, state) {
+    onFromReceived (pos, state) {
       this.isIntendedRecipient = this.show
       if (this.isIntendedRecipient) {
         this.from = pos
