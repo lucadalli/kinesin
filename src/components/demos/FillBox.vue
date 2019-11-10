@@ -6,12 +6,12 @@
     <Kinesin
       class="small-box"
       name="fill-box"
-      :show="!fill"
+      :show="show && !fill"
     />
     <Kinesin
       class="full-box"
       name="fill-box"
-      :show="fill"
+      :show="show && fill"
     />
   </div>
 </template>
@@ -25,8 +25,14 @@ export default {
   },
   data () {
     return {
-      fill: false
+      fill: false,
+      show: false
     }
+  },
+  mounted () {
+    setTimeout(() => {
+      this.show = true
+    }, 1000)
   }
 }
 </script>

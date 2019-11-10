@@ -2,6 +2,11 @@
 import Vue from 'vue'
 
 const bus = new Vue() // event bus
+const states = {
+  IDLE: 'idle',
+  FROM: 'from',
+  TO: 'to'
+}
 
 export default {
   props: {
@@ -33,28 +38,29 @@ export default {
   data () {
     return {
       from: null,
-      isIntendedPosRecipient: this.show,
-      // 'isIntendedPosRecipient' initialiased as 'show' such that if 'show' is true on mounted,
-      // computed property 'isReadyToRender' is also true, hence rendering the element
-      state: 'idle',
+      isIntendedRecipient: this.show,
+      // 'isIntendedRecipient' initialiased as 'show' such that if 'show' is true on mounted,
+      // computed property 'shouldRender' is also true, hence rendering the element
+      state: states.IDLE,
       style: {}
     }
   },
   computed: {
+    shouldRender () {
+      return this.show && this.isIntendedRecipient
+    },
     baseClass () {
       return `kinesin-${this.name} kinesin`
     },
     class () {
-      if (this.state === 'from') {
-        return [this.baseClass, 'kinesin-active kinesin-from']
+      const kinesinActive = 'kinesin-active'
+      if (this.state === states.FROM) {
+        return [this.baseClass, kinesinActive, 'kinesin-from']
       }
-      if (this.state === 'to') {
-        return [this.baseClass, 'kinesin-active kinesin-to']
+      if (this.state === states.TO) {
+        return [this.baseClass, kinesinActive, 'kinesin-to']
       }
       return this.baseClass
-    },
-    isReadyToRender () {
-      return this.show && this.isIntendedPosRecipient
     },
     eventName () {
       return `_${this.group}_${this.name}`
@@ -67,7 +73,7 @@ export default {
     bus.$off(this.eventName, this.onPositionReceived)
   },
   methods: {
-    getPositionAndSize (el) {
+    getVisualProperties (el) {
       if (this.ignoreCssTransforms) {
         let top = 0
         let left = 0
@@ -96,12 +102,12 @@ export default {
         height: rect.height
       }
     },
-    updatePosition (el, state) {
-      bus.$emit(this.eventName, this.getPositionAndSize(el), state)
+    sendFromState (el, state) {
+      bus.$emit(this.eventName, this.getVisualProperties(el), state)
     },
     determineTransform (el) {
       const fromState = this.from
-      const thisState = this.getPositionAndSize(el)
+      const thisState = this.getVisualProperties(el)
       if (this.transitionSize) {
         const xScaleOffset = (fromState.width - thisState.width) / 2
         const yScaleOffset = (fromState.height - thisState.height) / 2
@@ -112,41 +118,54 @@ export default {
       return `translate3d(${fromState.left - thisState.left}px, ${fromState.top - thisState.top}px, 0)`
     },
     onPositionReceived (pos, state) {
-      this.isIntendedPosRecipient = this.show
-      if (this.isIntendedPosRecipient) {
+      this.isIntendedRecipient = this.show
+      if (this.isIntendedRecipient) {
         this.from = pos
         this.state = state
       }
     },
-    enter (el, done) {
-      if (this.from) {
-        this.state = 'from'
-        this.style = {
-          transition: 'all 0s ease 0s', // no transition
-          transform: this.determineTransform(el)
+    async enter (el, done) {
+      if (!this.from) {
+        return done()
+      }
+      this.state = states.FROM
+      this.style = {
+        transition: 'all 0s ease 0s', // no transition
+        transform: this.determineTransform(el)
+      }
+      this.$emit('transitionstart')
+      await this.$nextTick() // wait for DOM update
+      this.$_reflow = document.body.offsetHeight // force document reflow
+      this.state = states.TO
+      this.style = {}
+      const onTransitionEnd = e => {
+        if (e.target === el) {
+          el.removeEventListener('transitionend', onTransitionEnd)
+          this.state = states.IDLE
+          this.$emit('transitionend')
+          done()
         }
-        this.$emit('transitionstart')
-        this.$nextTick(() => { // wait for DOM update
-          this.$_reflow = document.body.offsetHeight // force document reflow
-          this.state = 'to'
-          this.style = {}
-          const onTransitionEnd = e => {
-            if (e.target === el) {
-              el.removeEventListener('transitionend', onTransitionEnd)
-              this.state = 'idle'
-              this.$emit('transitionend')
-              done()
-            }
-          }
-          el.addEventListener('transitionend', onTransitionEnd)
-        })
+      }
+      el.addEventListener('transitionend', onTransitionEnd)
+    },
+    async leave (el, done) {
+      await this.$nextTick()
+      this.sendFromState(el, this.state)
+      done()
+    }
+  },
+  watch: {
+    async show (show) {
+      if (show) {
+        // wait two ticks
+        await this.$nextTick()
+        await this.$nextTick()
+        this.isIntendedRecipient = this.show
       }
     },
-    leave (el, done) {
-      this.$nextTick(() => {
-        this.updatePosition(el, this.state)
-        done()
-      })
+    async shouldRender (shouldRender) {
+      await this.$nextTick()
+      this.$emit('render', shouldRender)
     }
   },
   render (h) {
@@ -162,7 +181,7 @@ export default {
           leave: this.leave
         }
       },
-      this.isReadyToRender ? [
+      this.shouldRender ? [
         h(
           this.tag,
           {
