@@ -94,12 +94,12 @@ export default {
           height: el.offsetHeight
         }
       }
-      const rect = el.getBoundingClientRect()
+      const { top, left, width, height } = el.getBoundingClientRect()
       return {
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height
+        top,
+        left,
+        width,
+        height
       }
     },
     sendFromState (el, state) {
