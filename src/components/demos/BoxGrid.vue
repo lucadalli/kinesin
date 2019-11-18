@@ -2,7 +2,7 @@
   <div class="box-grid">
     <div
       class="box-grid__outer-box"
-      v-for="n in 48"
+      v-for="n in 20"
       :key="n"
     >
       <div
@@ -78,7 +78,7 @@ export default {
   }
 
   .kinesin-box-grid {
-    transition: transform 1s;
+    transition: transform 0.6s;
   }
 }
 </style>

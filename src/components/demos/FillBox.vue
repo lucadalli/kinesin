@@ -7,17 +7,20 @@
       class="small-box"
       name="fill-box"
       :show="show && !fill"
+      :animate="animate"
     />
     <Kinesin
       class="full-box"
       name="fill-box"
       :show="show && fill"
+      :animate="animate"
     />
   </div>
 </template>
 
 <script>
 import Kinesin from 'kinesin'
+import anime from 'animejs'
 
 export default {
   components: {
@@ -33,6 +36,20 @@ export default {
     setTimeout(() => {
       this.show = true
     }, 1000)
+  },
+  methods: {
+    animate (el, from, done) {
+      anime.remove(el)
+      anime({
+        targets: el,
+        translateX: [from.translateX, 0],
+        translateY: [from.translateY, 0],
+        scaleX: [from.scaleX, 1],
+        scaleY: [from.scaleY, 1],
+        duration: 800,
+        complete: done
+      })
+    }
   }
 }
 </script>

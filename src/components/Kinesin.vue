@@ -7,6 +7,21 @@ const states = {
   FROM: 'from',
   TO: 'to'
 }
+const defaultAnimate = async (el, from, done, setStyle, forceDomUpdate, stringifyTransform) => {
+  setStyle(style => ({
+    ...style,
+    transform: stringifyTransform(from)
+  }))
+  await forceDomUpdate()
+  setStyle({})
+  const onTransitionEnd = e => {
+    if (e.target === el) {
+      el.removeEventListener('transitionend', onTransitionEnd)
+      done()
+    }
+  }
+  el.addEventListener('transitionend', onTransitionEnd)
+}
 
 export default {
   props: {
@@ -33,6 +48,10 @@ export default {
     transitionSize: {
       type: Boolean,
       default: true
+    },
+    animate: {
+      type: Function,
+      default: defaultAnimate
     }
   },
   data () {
@@ -108,14 +127,39 @@ export default {
     determineTransform (el) {
       const fromState = this.from
       const thisState = this.getVisualProperties(el)
+      const translateX = fromState.left - thisState.left
+      const translateY = fromState.top - thisState.top
       if (this.transitionSize) {
         const xScaleOffset = (fromState.width - thisState.width) / 2
         const yScaleOffset = (fromState.height - thisState.height) / 2
-        const translation = `translate3d(${fromState.left - thisState.left + xScaleOffset}px, ${fromState.top - thisState.top + yScaleOffset}px, 0)`
-        const scale = `scale(${fromState.width / thisState.width}, ${fromState.height / thisState.height})`
-        return `${translation} ${scale}`
+        const translation = {
+          translateX: translateX + xScaleOffset,
+          translateY: translateY + yScaleOffset
+        }
+        const scale = {
+          scaleX: fromState.width / thisState.width,
+          scaleY: fromState.height / thisState.height
+        }
+        return {
+          ...translation,
+          ...scale
+        }
       }
-      return `translate3d(${fromState.left - thisState.left}px, ${fromState.top - thisState.top}px, 0)`
+      return {
+        translateX,
+        translateY
+      }
+    },
+    async forceDomUpdate () {
+      await this.$nextTick() // wait for DOM update
+      this.$_reflow = document.body.offsetHeight // force document reflow
+    },
+    stringifyTransform ({ translateX, translateY, scaleX, scaleY }) {
+      const translation = `translate3d(${translateX}px, ${translateY}px, 0px)`
+      if (this.transitionSize) {
+        return `${translation} scale(${scaleX}, ${scaleY})`
+      }
+      return translation
     },
     onFromReceived (pos, state) {
       this.isIntendedRecipient = this.show
@@ -124,29 +168,40 @@ export default {
         this.state = state
       }
     },
+    setStyle (arg) {
+      if (typeof arg === 'function') {
+        this.style = arg(this.style)
+        return
+      }
+      this.style = arg
+    },
     async enter (el, done) {
       if (!this.from) {
         return done()
       }
-      this.state = states.FROM
+      const onEnd = () => {
+        this.state = states.IDLE
+        this.style = {}
+        this.$emit('transitionend')
+        done()
+      }
+      if (this.state === states.IDLE) {
+        this.state = states.FROM
+      }
       this.style = {
-        transition: 'all 0s ease 0s', // no transition
-        transform: this.determineTransform(el)
+        transition: 'all 0s ease 0s' // no transition
       }
-      this.$emit('transitionstart')
-      await this.$nextTick() // wait for DOM update
-      this.$_reflow = document.body.offsetHeight // force document reflow
+      this.animate(
+        el,
+        this.determineTransform(el),
+        onEnd,
+        this.setStyle,
+        this.forceDomUpdate,
+        this.stringifyTransform
+      )
+      await this.forceDomUpdate()
       this.state = states.TO
-      this.style = {}
-      const onTransitionEnd = e => {
-        if (e.target === el) {
-          el.removeEventListener('transitionend', onTransitionEnd)
-          this.state = states.IDLE
-          this.$emit('transitionend')
-          done()
-        }
-      }
-      el.addEventListener('transitionend', onTransitionEnd)
+      this.$emit('transitionstart')
     },
     async leave (el, done) {
       await this.$nextTick()
