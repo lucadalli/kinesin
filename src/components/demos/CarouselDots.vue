@@ -9,7 +9,6 @@
       <kinesin
         name="carousel-dot"
         :show="currentDot === n"
-        :ignore-css-transforms="true"
       >
         <div class="dot-bg" />
       </kinesin>
@@ -34,9 +33,9 @@ export default {
 
 <style lang="scss" scoped>
 .carousel-dots {
-  font-size: 3rem;
+  margin: 1.6rem 0;
+  font-size: 2rem;
   transform-origin: 0 50%;
-  transform: scale(0.5);
 
   .dot {
     display: inline-block;
