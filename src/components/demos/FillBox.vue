@@ -3,18 +3,22 @@
     class="fill-box"
     @click="fill = !fill"
   >
-    <Kinesin
-      class="small-box"
-      name="fill-box"
-      :show="show && !fill"
-      :animate="animate"
-    />
-    <Kinesin
-      class="full-box"
-      name="fill-box"
-      :show="show && fill"
-      :animate="animate"
-    />
+    <template v-if="show">
+      <Kinesin
+        v-if="fill"
+        key="full-box"
+        class="full-box"
+        name="fill-box"
+        :animate="animate"
+      />
+      <Kinesin
+        v-else
+        key="small-box"
+        class="small-box"
+        name="fill-box"
+        :animate="animate"
+      />
+    </template>
   </div>
 </template>
 

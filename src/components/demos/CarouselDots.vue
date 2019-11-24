@@ -6,12 +6,12 @@
       class="dot"
       @click="currentDot = n"
     >
-      <kinesin
+      <Kinesin
         name="carousel-dot"
-        :show="currentDot === n"
+        v-if="currentDot === n"
       >
         <div class="dot-bg" />
-      </kinesin>
+      </Kinesin>
     </div>
   </div>
 </template>

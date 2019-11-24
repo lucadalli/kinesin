@@ -12,7 +12,7 @@
         <Kinesin
           class="box-grid__box-content"
           name="box-grid"
-          :show="boxPosition === n"
+          v-if="boxPosition === n"
         >
           <div class="box-grid__box-bg"></div>
         </Kinesin>

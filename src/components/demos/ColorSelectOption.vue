@@ -2,7 +2,7 @@
   <div class="cso">
     <div class="cso__dot-outer">
       <Kinesin
-        :show="isCurrentColor"
+        v-if="isCurrentColor"
         @transitionstart="$emit('transitionstart', $event)"
         name="color-dot"
       >

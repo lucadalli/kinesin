@@ -33,10 +33,6 @@ export default {
       type: [String, Number],
       default: 'default'
     },
-    show: {
-      type: Boolean,
-      required: true
-    },
     tag: {
       type: String,
       default: 'div'
@@ -57,17 +53,12 @@ export default {
   data () {
     return {
       from: null,
-      isIntendedRecipient: this.show,
-      // 'isIntendedRecipient' initialiased as 'show' such that if 'show' is true on mounted,
-      // computed property 'shouldRender' is also true, hence rendering the element
+      shouldRender: false,
       state: states.IDLE,
       style: {}
     }
   },
   computed: {
-    shouldRender () {
-      return this.show && this.isIntendedRecipient
-    },
     baseClass () {
       return `kinesin-${this.name} kinesin`
     },
@@ -162,11 +153,9 @@ export default {
       return translation
     },
     onFromReceived (pos, state) {
-      this.isIntendedRecipient = this.show
-      if (this.isIntendedRecipient) {
-        this.from = pos
-        this.state = state
-      }
+      this.shouldRender = true
+      this.from = pos
+      this.state = state
     },
     setStyle (arg) {
       if (typeof arg === 'function') {
@@ -209,15 +198,11 @@ export default {
       done()
     }
   },
+  async mounted () {
+    await this.$nextTick()
+    this.shouldRender = true
+  },
   watch: {
-    async show (show) {
-      if (show) {
-        // wait two ticks
-        await this.$nextTick()
-        await this.$nextTick()
-        this.isIntendedRecipient = this.show
-      }
-    },
     async shouldRender (shouldRender) {
       await this.$nextTick()
       this.$emit('render', shouldRender)
