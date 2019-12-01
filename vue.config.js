@@ -5,7 +5,7 @@ module.exports = {
   configureWebpack: {
     resolve: {
       alias: {
-        'kinesin$': path.resolve(__dirname, './src/components/Kinesin.vue')
+        'kinesin$': path.resolve(__dirname, './dist/kinesin.esm.js')
       }
     }
   }
