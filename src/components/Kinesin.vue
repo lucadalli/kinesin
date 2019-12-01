@@ -7,20 +7,21 @@ const states = {
   FROM: 'from',
   TO: 'to'
 }
-const defaultAnimate = async (el, from, done, setStyle, forceDomUpdate, stringifyTransform) => {
+const defaultAnimate = (el, from, done, setStyle, nextReflow, stringifyTransform) => {
   setStyle(style => ({
     ...style,
     transform: stringifyTransform(from)
   }))
-  await forceDomUpdate()
-  setStyle({})
-  const onTransitionEnd = e => {
-    if (e.target === el) {
-      el.removeEventListener('transitionend', onTransitionEnd)
-      done()
+  nextReflow(() => {
+    setStyle({})
+    const onTransitionEnd = e => {
+      if (e.target === el) {
+        el.removeEventListener('transitionend', onTransitionEnd)
+        done()
+      }
     }
-  }
-  el.addEventListener('transitionend', onTransitionEnd)
+    el.addEventListener('transitionend', onTransitionEnd)
+  })
 }
 
 export default {
@@ -141,9 +142,18 @@ export default {
         translateY
       }
     },
-    async forceDomUpdate () {
-      await this.$nextTick() // wait for DOM update
-      this.$_reflow = document.body.offsetHeight // force document reflow
+    nextReflow (callback) {
+      // wait for DOM update
+      const promise = this.$nextTick()
+        .then(() => {
+          // force document reflow
+          // assign to this to avoid being removed in tree-shaking
+          this._reflow = document.body.offsetHeight
+          callback && callback()
+        })
+      if (!callback) {
+        return promise
+      }
     },
     stringifyTransform ({ translateX, translateY, scaleX, scaleY }) {
       const translation = `translate3d(${translateX}px, ${translateY}px, 0px)`
@@ -164,7 +174,7 @@ export default {
       }
       this.style = arg
     },
-    async enter (el, done) {
+    enter (el, done) {
       if (!this.from) {
         return done()
       }
@@ -180,32 +190,36 @@ export default {
       this.style = {
         transition: 'all 0s ease 0s' // no transition
       }
-      this.animate(
-        el,
-        this.determineTransform(el),
-        onEnd,
-        this.setStyle,
-        this.forceDomUpdate,
-        this.stringifyTransform
-      )
-      await this.forceDomUpdate()
-      this.state = states.TO
-      this.$emit('transitionstart')
+      this.nextReflow(() => {
+        this.state = states.TO
+        this.$emit('transitionstart')
+        this.animate(
+          el,
+          this.determineTransform(el),
+          onEnd,
+          this.setStyle,
+          this.nextReflow,
+          this.stringifyTransform
+        )
+      })
     },
-    async leave (el, done) {
-      await this.$nextTick()
-      this.sendFromState(el, this.state)
-      done()
+    leave (el, done) {
+      this.$nextTick(() => {
+        this.sendFromState(el, this.state)
+        done()
+      })
     }
   },
-  async mounted () {
-    await this.$nextTick()
-    this.shouldRender = true
+  mounted () {
+    this.$nextTick(() => {
+      this.shouldRender = true
+    })
   },
   watch: {
-    async shouldRender (shouldRender) {
-      await this.$nextTick()
-      this.$emit('render', shouldRender)
+    shouldRender (shouldRender) {
+      this.$nextTick(() => {
+        this.$emit('render', shouldRender)
+      })
     }
   },
   render (h) {
