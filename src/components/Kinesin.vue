@@ -188,19 +188,20 @@ export default {
         this.state = states.FROM
       }
       this.style = {
-        transition: 'all 0s ease 0s' // no transition
+        // no transition
+        transition: 'transform 0s ease 0s'
       }
+      this.animate(
+        el,
+        this.determineTransform(el),
+        onEnd,
+        this.setStyle,
+        this.nextReflow,
+        this.stringifyTransform
+      )
       this.nextReflow(() => {
         this.state = states.TO
         this.$emit('transitionstart')
-        this.animate(
-          el,
-          this.determineTransform(el),
-          onEnd,
-          this.setStyle,
-          this.nextReflow,
-          this.stringifyTransform
-        )
       })
     },
     leave (el, done) {
