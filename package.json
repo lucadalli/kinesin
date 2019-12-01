@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build --target lib --name kinesin src/components/Kinesin.vue",
+    "build": "vue-cli-service build --target lib --name kinesin src/components/Kinesin.vue && rollup -c",
     "build-demo": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "test:unit": "vue-cli-service test:unit",
-    "release:patch": "npm run build && npm version patch && npm publish",
-    "release:minor": "npm run build && npm version minor && npm publish",
-    "release:major": "npm run build && npm version major && npm publish"
+    "publish:patch": "npm run build && npm version patch && npm publish",
+    "publish:minor": "npm run build && npm version minor && npm publish",
+    "publish:major": "npm run build && npm version major && npm publish"
   },
   "dependencies": {},
   "devDependencies": {
@@ -28,6 +28,12 @@
     "eslint": "^5.16.0",
     "eslint-plugin-vue": "^5.0.0",
     "lint-staged": "^8.1.5",
+    "rollup": "^1.27.5",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^5.1.2",
+    "rollup-plugin-vue": "^5.1.1",
     "sass": "^1.18.0",
     "sass-loader": "^7.1.0",
     "vue": "^2.6.10",
@@ -37,6 +43,7 @@
     "vue": "^2.6.10"
   },
   "main": "dist/kinesin.common.js",
+  "module": "dist/kinesin.esm.min.js",
   "unpkg": "dist/kinesin.umd.min.js",
   "browser": {
     "./sfc": "./src/components/Kinesin.vue"
